@@ -513,37 +513,35 @@
                 });
         }
 
-        document.querySelectorAll(".add-to-cart").forEach(btn => {
-            btn.addEventListener("click", function() {
-                const productId = this.dataset.product;
-                const parent = this.closest(".product__item");
-                const group = parent.querySelector(".product-card__btns");
-
-                fetch("/api/webapp/cart/add", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": csrf
-                    },
-                    body: JSON.stringify({
-                        product_id: productId,
-                        chat_id: userId
-                    })
+        document.querySelector(".add-to-cart").addEventListener("click", function () {
+            fetch("/api/webapp/cart/add", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrf
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    chat_id: userId
                 })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (!data.success) {
-                            showError(data.message ?? "{{ __('webapp.add_error') }}");
-                            return;
-                        }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        showError(data.message ?? "{{ __('webapp.add_error') }}");
+                        return;
+                    }
 
-                        updateBadge(data.count);
-                        btn.style.display = "none";
-                        group.dataset.itemId = data.item_id;
-                        group.style.display = "flex";
-                        tg.HapticFeedback.notificationOccurred("success");
-                    });
-            });
+                    updateBadge(data.count);
+                    this.style.display = "none";
+
+                    const controls = document.getElementById("qty-controls");
+                    controls.dataset.itemId = data.item_id;
+                    document.getElementById("qty-value").innerText = 1;
+                    controls.style.display = "flex";
+
+                    tg.HapticFeedback.notificationOccurred("success");
+                });
         });
 
         document.querySelector(".qty-plus").addEventListener("click", () => {
@@ -554,25 +552,6 @@
         document.querySelector(".qty-minus").addEventListener("click", () => {
             const itemId = document.getElementById("qty-controls").dataset.itemId;
             updateQty(itemId, -1);
-        });
-
-        // RX TRANSPOSITION LOGIC
-        document.getElementById('rx-transpose').addEventListener('click', function () {
-            const sph = parseFloat(document.getElementById('rx-sph').value) || 0;
-            const cyl = parseFloat(document.getElementById('rx-cyl').value) || 0;
-            let axis = parseInt(document.getElementById('rx-axis').value) || 0;
-            if (!axis || axis < 0 || axis > 180) {
-                document.getElementById('rx-transpose-result').innerText = 'Введите корректную ось (1-180)';
-                return;
-            }
-            // Транспозиция
-            const newSph = +(sph + cyl).toFixed(2);
-            const newCyl = +(-cyl).toFixed(2);
-            let newAxis = axis <= 90 ? axis + 90 : axis - 90;
-            if (newAxis > 180) newAxis -= 180;
-            if (newAxis < 1) newAxis += 180;
-            document.getElementById('rx-transpose-result').innerText =
-                `Транспозиция: Sph ${newSph > 0 ? '+' : ''}${newSph}, Cyl ${newCyl > 0 ? '+' : ''}${newCyl}, Axis ${newAxis}°`;
         });
     </script>
 @endsection
