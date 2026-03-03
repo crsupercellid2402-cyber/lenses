@@ -513,6 +513,39 @@
                 });
         }
 
+        document.querySelectorAll(".add-to-cart").forEach(btn => {
+            btn.addEventListener("click", function() {
+                const productId = this.dataset.product;
+                const parent = this.closest(".product__item");
+                const group = parent.querySelector(".product-card__btns");
+
+                fetch("/api/webapp/cart/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrf
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        chat_id: userId
+                    })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.success) {
+                            showError(data.message ?? "{{ __('webapp.add_error') }}");
+                            return;
+                        }
+
+                        updateBadge(data.count);
+                        btn.style.display = "none";
+                        group.dataset.itemId = data.item_id;
+                        group.style.display = "flex";
+                        tg.HapticFeedback.notificationOccurred("success");
+                    });
+            });
+        });
+
         document.querySelector(".qty-plus").addEventListener("click", () => {
             const itemId = document.getElementById("qty-controls").dataset.itemId;
             updateQty(itemId, +1);
