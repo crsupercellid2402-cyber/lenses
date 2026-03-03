@@ -70,6 +70,7 @@ class LandingController
             ->get();
 
         $productQuery = Product::query()
+            ->where('is_active', 1)
             ->whereIn('category_id', $categoryIds)
             ->whereHas('stock', function ($q) {
                 $q->where('quantity', '>=', 1);
