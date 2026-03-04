@@ -27,20 +27,28 @@
             color: #124ea5;
         }
 
+        .product-card__title:hover {
+            text-decoration: underline;
+        }
+
+        .product-card__image {
+            cursor: pointer;
+        }
+
         .product-card__type {
             color: #2a0000;
         }
 
-        .custom-checkbox input[type="radio"]:checked + span {
+        .custom-checkbox input[type="radio"]:checked+span {
             background: #124ea5 !important;
             border-color: #124ea5 !important;
         }
 
-        .custom-checkbox input[type="radio"]:checked + span:before {
+        .custom-checkbox input[type="radio"]:checked+span:before {
             border-color: #124ea5 !important;
         }
 
-        .custom-checkbox input[type="radio"]:checked + span + p {
+        .custom-checkbox input[type="radio"]:checked+span+p {
             color: #124ea5 !important;
         }
 
@@ -96,6 +104,7 @@
                 transform: translateY(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateY(0);
                 opacity: 1;
@@ -206,42 +215,45 @@
         </div>
 
         <div class="products">
-            @foreach($cart->items as $item)
+            @foreach ($cart->items as $item)
                 @php
                     $itemPricing = $pricing['items'][$item->id] ?? null;
                     $unitPrice = $itemPricing['final_unit_price'] ?? $item->product->price;
                     $badge = null;
                     if (($itemPricing['product_discount'] ?? 0) > 0) {
-                        $badge = '-'.($itemPricing['product_discount']).'%';
+                        $badge = '-' . $itemPricing['product_discount'] . '%';
                     } elseif (($itemPricing['applied_type'] ?? null) === 'promo_percent') {
-                        $badge = '-'.($pricing['promotion_percent'] ?? 0).'%';
+                        $badge = '-' . ($pricing['promotion_percent'] ?? 0) . '%';
                     } elseif (($itemPricing['applied_type'] ?? null) === 'promo_one_plus_two') {
                         $badge = '1+2';
                     }
                 @endphp
                 <div class="product-card" data-id="{{ $item->id }}">
 
-                    <div class="product-card__image">
-                        <img
-                            src="{{ $item->product->images->first() ? asset('storage/' . $item->product->images->first()->url) : '/no-image.png' }}"
+                    <a href="{{ route('webapp.product.show', $item->product->id) }}" class="product-card__image">
+                        <img src="{{ $item->product->images->first() ? asset('storage/' . $item->product->images->first()->url) : '/no-image.png' }}"
                             alt="image">
-                    </div>
+                    </a>
 
                     <div class="product-card__data">
-                    <span class="product-card__type">
-                        {{ $item->product->category->localized_name ?? '' }}
-                    </span>
+                        <span class="product-card__type">
+                            {{ $item->product->category->localized_name ?? '' }}
+                        </span>
 
-                        <div class="product-card__title">{{ $item->product->localized_name }}</div>
+                        <a href="{{ route('webapp.product.show', $item->product->id) }}" class="product-card__title"
+                            style="text-decoration: none;">
+                            {{ $item->product->localized_name }}
+                        </a>
 
-                        @if($badge)
+                        @if ($badge)
                             <div class="product-card__badge">{{ $badge }}</div>
                         @endif
 
                         <div class="product-card__meta">
                             <p class="product-card__price">
                                 <span class="product-card__qty">{{ $item->quantity }}</span>
-                                × <span class="product-card__unit-price">{{ number_format($unitPrice, 0, '.', ' ') }}</span>
+                                × <span
+                                    class="product-card__unit-price">{{ number_format($unitPrice, 0, '.', ' ') }}</span>
                             </p>
 
                             <div class="product-card__btns">
@@ -300,18 +312,14 @@
             </div>
         </div>
 
-        <button class="payment__btn"
-                id="make-order"
-            {{ $cart->items->count() === 0 ? 'disabled' : '' }}>
-            {{ $cart->items->count() === 0
-                ? __('webapp.cart_empty')
-                : __('webapp.pay') }}
+        <button class="payment__btn" id="make-order" {{ $cart->items->count() === 0 ? 'disabled' : '' }}>
+            {{ $cart->items->count() === 0 ? __('webapp.cart_empty') : __('webapp.pay') }}
         </button>
     </div>
 @endsection
 
 <script src="https://code.jquery.com/jquery-3.7.1.slim.js"
-        integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc=" crossorigin="anonymous"></script>
+    integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc=" crossorigin="anonymous"></script>
 @section('scripts')
     <script>
         const csrf = "{{ csrf_token() }}";
@@ -341,69 +349,73 @@
         }
 
         function updateOrderButtonText(count) {
-    const payBtn = document.getElementById('make-order');
-    if (!payBtn) return;
-
-    if (count === 0) {
-        payBtn.disabled = true;
-        payBtn.innerText = emptyText;
-    } else {
-        payBtn.disabled = false;
-        // Проверяем выбранный метод оплаты
-        const selectedPayment = document.querySelector("input[name=payment]:checked");
-        const label = selectedPayment.closest('.custom-checkbox').querySelector('p').innerText;
-        
-        payBtn.innerText = label === "{{ __('webapp.cash') }}" 
-            ? "{{ __('webapp.order') }}" 
-            : "{{ __('webapp.pay') }}";
-    }
-}
-
-    function applyTotals(data) {
-        const total = parseAmount(data.total);
-        const subtotal = parseAmount(data.subtotal ?? 0);
-        const discount = parseAmount(data.discount_total ?? 0);
-
-        // Обновляем текст напрямую, без лишних манипуляций с DOM
-        const totalEl = document.querySelector('.total-price');
-        if (totalEl) totalEl.textContent = formatAmount(total);
-
-        document.querySelectorAll('.subtotal-price').forEach(el => {
-            el.textContent = formatAmount(subtotal);
-        });
-
-        document.querySelectorAll('.discount-price').forEach(el => {
-            el.textContent = formatAmount(discount);
-        });
-
-        // Обновление состояния кнопки (из предыдущего совета)
-        const count = Number(data.count);
-        if (!isNaN(count)) {
             const payBtn = document.getElementById('make-order');
-            if (payBtn) {
-                if (count === 0) {
-                    payBtn.disabled = true;
-                    payBtn.innerText = emptyText;
-                } else {
-                    payBtn.disabled = false;
-                    // Проверяем актуальный текст в зависимости от выбранной оплаты
-                    const selectedPayment = document.querySelector("input[name=payment]:checked");
-                    const label = selectedPayment.closest('.custom-checkbox').querySelector('p').innerText;
-                    payBtn.innerText = label === "{{ __('webapp.cash') }}" ? "{{ __('webapp.order') }}" : "{{ __('webapp.pay') }}";
+            if (!payBtn) return;
+
+            if (count === 0) {
+                payBtn.disabled = true;
+                payBtn.innerText = emptyText;
+            } else {
+                payBtn.disabled = false;
+                // Проверяем выбранный метод оплаты
+                const selectedPayment = document.querySelector("input[name=payment]:checked");
+                const label = selectedPayment.closest('.custom-checkbox').querySelector('p').innerText;
+
+                payBtn.innerText = label === "{{ __('webapp.cash') }}" ?
+                    "{{ __('webapp.order') }}" :
+                    "{{ __('webapp.pay') }}";
+            }
+        }
+
+        function applyTotals(data) {
+            const total = parseAmount(data.total);
+            const subtotal = parseAmount(data.subtotal ?? 0);
+            const discount = parseAmount(data.discount_total ?? 0);
+
+            // Обновляем текст напрямую, без лишних манипуляций с DOM
+            const totalEl = document.querySelector('.total-price');
+            if (totalEl) totalEl.textContent = formatAmount(total);
+
+            document.querySelectorAll('.subtotal-price').forEach(el => {
+                el.textContent = formatAmount(subtotal);
+            });
+
+            document.querySelectorAll('.discount-price').forEach(el => {
+                el.textContent = formatAmount(discount);
+            });
+
+            // Обновление состояния кнопки (из предыдущего совета)
+            const count = Number(data.count);
+            if (!isNaN(count)) {
+                const payBtn = document.getElementById('make-order');
+                if (payBtn) {
+                    if (count === 0) {
+                        payBtn.disabled = true;
+                        payBtn.innerText = emptyText;
+                    } else {
+                        payBtn.disabled = false;
+                        // Проверяем актуальный текст в зависимости от выбранной оплаты
+                        const selectedPayment = document.querySelector("input[name=payment]:checked");
+                        const label = selectedPayment.closest('.custom-checkbox').querySelector('p').innerText;
+                        payBtn.innerText = label === "{{ __('webapp.cash') }}" ? "{{ __('webapp.order') }}" :
+                            "{{ __('webapp.pay') }}";
+                    }
                 }
             }
         }
-    }
 
         function updateQty(itemId, delta) {
             fetch("/api/webapp/cart/update", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrf
-                },
-                body: JSON.stringify({item_id: itemId, delta})
-            })
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrf
+                    },
+                    body: JSON.stringify({
+                        item_id: itemId,
+                        delta
+                    })
+                })
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success) {
@@ -427,20 +439,22 @@
         }
 
         document.querySelectorAll(".product-card__del").forEach(btn => {
-            btn.addEventListener("click", function (e) {
+            btn.addEventListener("click", function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 this.blur();
                 const itemId = this.dataset.id;
 
                 fetch("/api/webapp/cart/remove", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": csrf
-                    },
-                    body: JSON.stringify({item_id: itemId})
-                })
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": csrf
+                        },
+                        body: JSON.stringify({
+                            item_id: itemId
+                        })
+                    })
                     .then(r => r.json())
                     .then(data => {
                         if (data.error || data.success === false) {
@@ -472,21 +486,21 @@
             });
         });
 
-        document.getElementById("make-order").addEventListener("click", function () {
+        document.getElementById("make-order").addEventListener("click", function() {
             if (this.disabled) return;
             document.getElementById("orderModal").style.display = "block";
         });
 
-        document.getElementById("closeOrderModal").addEventListener("click", function () {
+        document.getElementById("closeOrderModal").addEventListener("click", function() {
             document.getElementById("orderModal").style.display = "none";
         });
 
-        document.getElementById("delivery_type").addEventListener("change", function () {
+        document.getElementById("delivery_type").addEventListener("change", function() {
             document.getElementById("delivery-fields").style.display =
                 this.value === "delivery" ? "block" : "none";
         });
 
-        document.getElementById("confirm-order").addEventListener("click", function () {
+        document.getElementById("confirm-order").addEventListener("click", function() {
 
             const delivery_type = document.getElementById("delivery_type").value;
             const address = document.getElementById("delivery_address").value;
@@ -504,37 +518,37 @@
             const payment_type = label === "PayMe" ? "payme" : "cash";
 
             fetch("/api/webapp/order/create", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrf
-                },
-                body: JSON.stringify({
-                    chat_id: userId,
-                    payment_type,
-                    delivery_type,
-                    delivery_address: address,
-                    delivery_phone: phone,
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrf
+                    },
+                    body: JSON.stringify({
+                        chat_id: userId,
+                        payment_type,
+                        delivery_type,
+                        delivery_address: address,
+                        delivery_phone: phone,
+                    })
                 })
-            })
                 .then(r => r.json())
                 .then(data => {
-                     if (data.success) tg.close();
+                    if (data.success) tg.close();
 
                     // if (data.success) {
-                       // let formattedAmount = Math.round(data.order_total_price);
-                        //let callback = `{{ env('APP_URL') }}/telegram/webapp`;
+                    // let formattedAmount = Math.round(data.order_total_price);
+                    //let callback = `{{ env('APP_URL') }}/telegram/webapp`;
 
                     //     let paycomForm = `
-                    //         <form id="form-payme" method="POST" action="https://checkout.paycom.uz">
-                    //             <input type="hidden" name="merchant" value="6925c6584d88ce7417bab6d0">
-                    //             <input type="hidden" name="account[order_id]" value="${data.order_id}">
-                    //             <input type="hidden" name="amount" value="${formattedAmount * 100}">
-                    //             <input type="hidden" name="lang" value="{{app()->getLocale()}}">
-                    //             <input type="hidden" name="callback" value="${callback}">
-                    //             <input type="submit" value="">
-                    //         </form>
-                    //     `;
+                //         <form id="form-payme" method="POST" action="https://checkout.paycom.uz">
+                //             <input type="hidden" name="merchant" value="6925c6584d88ce7417bab6d0">
+                //             <input type="hidden" name="account[order_id]" value="${data.order_id}">
+                //             <input type="hidden" name="amount" value="${formattedAmount * 100}">
+                //             <input type="hidden" name="lang" value="{{ app()->getLocale() }}">
+                //             <input type="hidden" name="callback" value="${callback}">
+                //             <input type="submit" value="">
+                //         </form>
+                //     `;
 
                     //     $('body').append(paycomForm);
                     //     $('#form-payme').submit();
@@ -544,11 +558,11 @@
         });
 
         document.querySelectorAll('input[name="payment"]').forEach(r => {
-    r.addEventListener("change", function () {
-        // Просто вызываем обновление текста на основе текущего состояния
-        const currentCount = document.querySelectorAll('.product-card').length;
-        updateOrderButtonText(currentCount);
-    });
-});
+            r.addEventListener("change", function() {
+                // Просто вызываем обновление текста на основе текущего состояния
+                const currentCount = document.querySelectorAll('.product-card').length;
+                updateOrderButtonText(currentCount);
+            });
+        });
     </script>
 @endsection

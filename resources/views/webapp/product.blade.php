@@ -190,11 +190,11 @@
 
                     $discountBadge = null;
                     if ($productDiscount > 0) {
-                        $discountBadge = '-'.$productDiscount.'%';
-                        $finalPrice = $basePrice * (100 - $productDiscount) / 100;
+                        $discountBadge = '-' . $productDiscount . '%';
+                        $finalPrice = ($basePrice * (100 - $productDiscount)) / 100;
                     } elseif ($promoType === \App\Models\PromotionSetting::TYPE_PERCENT && $promoPercent > 0) {
-                        $discountBadge = '-'.$promoPercent.'%';
-                        $finalPrice = $basePrice * (100 - $promoPercent) / 100;
+                        $discountBadge = '-' . $promoPercent . '%';
+                        $finalPrice = ($basePrice * (100 - $promoPercent)) / 100;
                     } elseif ($promoType === \App\Models\PromotionSetting::TYPE_ONE_PLUS_TWO) {
                         $discountBadge = '1+2';
                     }
@@ -202,16 +202,16 @@
                     $attributesGrouped = $product->attributes->groupBy('name');
                 @endphp
 
-                @if($product->images->count())
+                @if ($product->images->count())
                     <div class="product-slider" data-product-slider>
                         <div class="product-slider__track">
-                            @foreach($product->images as $image)
+                            @foreach ($product->images as $image)
                                 <div class="product-slider__slide">
                                     <img src="{{ asset('storage/' . $image->url) }}" alt="image">
                                 </div>
                             @endforeach
                         </div>
-                        @if($product->images->count() > 1)
+                        @if ($product->images->count() > 1)
                             <button class="product-slider__btn product-slider__btn--prev" type="button">‹</button>
                             <button class="product-slider__btn product-slider__btn--next" type="button">›</button>
                             <div class="product-slider__dots"></div>
@@ -225,7 +225,8 @@
 
                 <div class="single__photo-wave" aria-hidden="true">
                     <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
-                        <path fill="#FFFFFF" d="M0,60 C240,100 480,20 720,60 C960,100 1200,20 1440,60 L1440,100 L0,100 Z"></path>
+                        <path fill="#FFFFFF" d="M0,60 C240,100 480,20 720,60 C960,100 1200,20 1440,60 L1440,100 L0,100 Z">
+                        </path>
                     </svg>
                 </div>
             </div>
@@ -234,12 +235,11 @@
                 <div class="single__row">
                     <h1 class="single__title">{{ $product->localized_name }}</h1>
 
-                    @if($discountBadge)
+                    @if ($discountBadge)
                         <span class="product__discount product__discount-badge">{{ $discountBadge }}</span>
                     @endif
 
-                    <button class="single__button add-to-cart"
-                            data-id="{{ $product->id }}">
+                    <button class="single__button add-to-cart" data-id="{{ $product->id }}">
                     </button>
 
                     <div class="qty-controls" id="qty-controls">
@@ -257,23 +257,23 @@
                     <div>
                         Цена:
                         <span class="product__price">{{ number_format($finalPrice, 0, '.', ' ') }}</span>
-                        @if($finalPrice < $basePrice)
+                        @if ($finalPrice < $basePrice)
                             <span class="product__price-old">{{ number_format($basePrice, 0, '.', ' ') }}</span>
                         @endif
                     </div>
 
-                    @if($product->category)
+                    @if ($product->category)
                         <div>Категория: {{ $product->category->localized_name ?? $product->category->name }}</div>
                     @endif
 
-                    @if($product->stock)
+                    @if ($product->stock)
                         <div>В наличии: {{ $product->stock->quantity }}</div>
                     @endif
 
-                    @if($attributesGrouped->isNotEmpty())
+                    @if ($attributesGrouped->isNotEmpty())
                         <div>
                             Атрибуты:
-                            @foreach($attributesGrouped as $attributeName => $items)
+                            @foreach ($attributesGrouped as $attributeName => $items)
                                 <div>
                                     <strong>{{ $attributeName }}:</strong>
                                     {{ $items->pluck('pivot.value')->unique()->implode(', ') }}
@@ -362,20 +362,20 @@
 
         loadFavoriteStatus();
 
-        favBtn.addEventListener("click", function (e) {
+        favBtn.addEventListener("click", function(e) {
             e.preventDefault();
 
             fetch("/api/webapp/favorite/toggle", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrf
-                },
-                body: JSON.stringify({
-                    chat_id: userId,
-                    product_id: productId
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrf
+                    },
+                    body: JSON.stringify({
+                        chat_id: userId,
+                        product_id: productId
+                    })
                 })
-            })
                 .then(r => r.json())
                 .then(data => {
                     favBtn.classList.toggle("active", data.favorite);
@@ -446,16 +446,16 @@
 
         function updateQty(itemId, delta) {
             fetch("/api/webapp/cart/update", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrf
-                },
-                body: JSON.stringify({
-                    item_id: itemId,
-                    delta: delta
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrf
+                    },
+                    body: JSON.stringify({
+                        item_id: itemId,
+                        delta: delta
+                    })
                 })
-            })
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success) {
@@ -477,18 +477,18 @@
                 });
         }
 
-        document.querySelector(".add-to-cart").addEventListener("click", function () {
+        document.querySelector(".add-to-cart").addEventListener("click", function() {
             fetch("/api/webapp/cart/add", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrf
-                },
-                body: JSON.stringify({
-                    product_id: productId,
-                    chat_id: userId
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrf
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        chat_id: userId
+                    })
                 })
-            })
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success) {

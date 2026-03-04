@@ -109,7 +109,7 @@
     <div class="content">
         <div class="header">
             <a href="{{ url()->previous() == url()->current() ? route('webapp') : url()->previous() }}"
-               class="header__btn i-back"></a>
+                class="header__btn i-back"></a>
             <p class="title">{{ __('webapp.profile_title') }}</p>
         </div>
 
@@ -134,8 +134,8 @@
                         <div class="order-line">
                             <span>{{ __('webapp.order_number') }} {{ $order->id }}</span>
                             <span class="order-status status-{{ $order->status }}">
-                            {{ __('webapp.order_status_'.$order->status) }}
-                        </span>
+                                {{ __('webapp.order_status_' . $order->status) }}
+                            </span>
                         </div>
 
                         <p class="order-sum">
@@ -148,17 +148,18 @@
                         </p>
 
                         <div class="order-items" id="order-items-{{ $order->id }}">
-                            @foreach($order->items as $item)
+                            @foreach ($order->items as $item)
                                 <div class="product-card" style="margin-top:10px;">
                                     <div class="product-card__image">
-                                        <img src="{{ $item->product->images->first()
-                                        ? asset('storage/' . $item->product->images->first()->url)
-                                        : '/no-image.png' }}">
+                                        <img
+                                            src="{{ $item->product && $item->product->images->first()
+                                                ? asset('storage/' . $item->product->images->first()->url)
+                                                : '/no-image.png' }}">
                                     </div>
 
                                     <div class="product-card__data">
                                         <div class="product-card__title">
-                                            {{ $item->product->localized_name }}
+                                            {{ $item->product ? $item->product->localized_name : 'Товар удален' }}
                                         </div>
 
                                         <div class="product-card__meta">
@@ -221,7 +222,7 @@
         }
 
         document.querySelectorAll('.js-order').forEach(order => {
-            order.addEventListener('click', function () {
+            order.addEventListener('click', function() {
                 this.classList.toggle('open');
             });
         });
